@@ -32,8 +32,9 @@ IN THE SOFTWARE.
 
 /* By default code for 'all different constraints' is disabled, since 'NADC'
  * is defined.
- */
+ *
 #define NADC
+ */
 
 /* By default we enable failed literals, since 'NFL' is undefined.
  *
