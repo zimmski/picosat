@@ -1416,7 +1416,7 @@ static void
 resetadoconflict (PS * ps)
 {
   assert (ps->adoconflict);
-  delete_clause (ps->adoconflict);
+  delete_clause (ps, ps->adoconflict);
   ps->adoconflict = 0;
 }
 
@@ -2810,7 +2810,7 @@ add_ado (PS * ps)
     ENLARGE (ps->ados, ps->hados, ps->eados);
 
   NEWN (ado, len + 1);
-  *hados++ = ado;
+  *ps->hados++ = ado;
 
   p = ps->added;
   q = ado;
@@ -4288,7 +4288,7 @@ static unsigned primes[] = { 996293, 330643, 753947, 500873 };
 #define PRIMES ((sizeof primes)/sizeof *primes)
 
 static unsigned
-hash_ado (Lit ** ado, unsigned salt)
+hash_ado (PS * ps, Lit ** ado, unsigned salt)
 {
   unsigned i, res, tmp;
   Lit ** p, * lit;
@@ -4339,12 +4339,12 @@ cmp_ado (Lit ** a, Lit ** b)
 }
 
 static Lit ***
-find_ado (Lit ** ado)
+find_ado (PS * ps, Lit ** ado)
 {
   Lit *** res, ** other;
   unsigned pos, delta;
 
-  pos = hash_ado (ado, 0);
+  pos = hash_ado (ps, ado, 0);
   assert (pos < ps->szadotab);
   res = ps->adotab + pos;
 
@@ -4352,7 +4352,7 @@ find_ado (Lit ** ado)
   if (!other || !cmp_ado (other, ado))
     return res;
 
-  delta = hash_ado (ado, 1);
+  delta = hash_ado (ps, ado, 1);
   if (!(delta & 1))
     delta++;
 
@@ -4387,12 +4387,12 @@ enlarge_adotab (PS * ps)
 }
 
 static int
-propado (Var * v)
+propado (PS * ps, Var * v)
 {
   Lit ** p, ** q, *** adotabpos, **ado, * lit;
   Var * u;
 
-  if (ps->level && ps->adodisabled)
+  if (ps->LEVEL && ps->adodisabled)
     return 1;
 
   assert (!ps->conflict);
@@ -4419,7 +4419,7 @@ propado (Var * v)
   if (4 * ps->nadotab >= 3 * ps->szadotab)	/* at least 75% filled */
     enlarge_adotab (ps);
 
-  adotabpos = find_ado (v->ado);
+  adotabpos = find_ado (ps, v->ado);
   ado = *adotabpos;
 
   if (!ado)
@@ -4432,7 +4432,7 @@ propado (Var * v)
 
   assert (ado != v->ado);
 
-  ps->adoconflict = new_clause (2 * llength (ado), 1);
+  ps->adoconflict = new_clause (ps, 2 * llength (ado), 1);
   q = ps->adoconflict->lits;
 
   for (p = ado; (lit = *p); p++)
@@ -7017,8 +7017,8 @@ picosat_add_ado_lit (PS * ps, int external_lit)
   if (external_lit)
     {
       ps->addingtoado = 1;
-      internal_lit = import_lit (external_lit, 1);
-      add_lit (internal_lit);
+      internal_lit = import_lit (ps, external_lit, 1);
+      add_lit (ps, internal_lit);
     }
   else
     {
@@ -8501,7 +8501,7 @@ picosat_enable_ado (PS * ps)
 }
 
 void
-picosat_set_ado_conflict_limit (unsigned newadoconflictlimit)
+picosat_set_ado_conflict_limit (PS * ps, unsigned newadoconflictlimit)
 {
   check_ready (ps);
   ps->adoconflictlimit = newadoconflictlimit;
